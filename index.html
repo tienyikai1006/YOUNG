@@ -2818,36 +2818,42 @@ const defaultItinerary = JSON.parse(JSON.stringify(itinerary));
 
 function normalizeItineraryData(value) {
   const base = safeClone(defaultItinerary);
-  const source = Array.isArray(value) ? value : base;
-  const normalized = base.map((baseDay, di) => {
-    const rawDay = source[di] && typeof source[di] === 'object' ? source[di] : {};
+  const sourceIsArray = Array.isArray(value);
+  const source = sourceIsArray ? value : base;
+
+  return base.map((baseDay, di) => {
+    const hasRawDay = source[di] && typeof source[di] === 'object';
+    const rawDay = hasRawDay ? source[di] : {};
     const day = { ...baseDay, ...rawDay };
-    const rawGroups = Array.isArray(rawDay.groups) ? rawDay.groups : (Array.isArray(day.groups) ? day.groups : []);
+
+    // 重點：Firebase 可能不保留空陣列 items: []。
+    // 如果某個 group 從雲端讀回來只剩 { time: '下午' }，要視為「使用者已刪空」，
+    // 不能再把預設的「交通待確認」補回去。
+    const rawGroups = Array.isArray(rawDay.groups)
+      ? rawDay.groups
+      : (sourceIsArray && hasRawDay ? [] : safeClone(baseDay.groups || []));
+
     day.groups = rawGroups.map((rawGroup, gi) => {
       const baseGroup = (baseDay.groups || [])[gi] || { time: rawGroup?.time || '下午', items: [] };
-      const group = rawGroup && typeof rawGroup === 'object' ? { ...baseGroup, ...rawGroup } : safeClone(baseGroup);
+      if (!rawGroup || typeof rawGroup !== 'object') return safeClone(baseGroup);
+
+      const group = { ...baseGroup, ...rawGroup };
       group.time = group.time || baseGroup.time || '下午';
-      group.items = Array.isArray(group.items) ? group.items.filter(Boolean) : [];
+
+      const hasOwnItems = Object.prototype.hasOwnProperty.call(rawGroup, 'items');
+      if (hasOwnItems) {
+        group.items = Array.isArray(rawGroup.items) ? rawGroup.items.filter(Boolean) : [];
+      } else {
+        group.items = sourceIsArray ? [] : safeClone(baseGroup.items || []);
+      }
       return group;
     });
-    if (!day.groups.length && Array.isArray(baseDay.groups)) {
+
+    if (!day.groups.length && !sourceIsArray && Array.isArray(baseDay.groups)) {
       day.groups = safeClone(baseDay.groups);
-      itineraryRepairNeeded = true;
     }
     return day;
   });
-
-  // Firebase Realtime Database 不會穩定保留空陣列；如果 Day 5 被讀成全空，
-  // 自動還原成原始 Day 5，避免「刪一筆後整天消失」。
-  const day5 = normalized[4];
-  const day5Items = day5?.groups?.reduce((sum, group) => sum + (Array.isArray(group.items) ? group.items.length : 0), 0) || 0;
-  const baseDay5Items = base[4]?.groups?.reduce((sum, group) => sum + (Array.isArray(group.items) ? group.items.length : 0), 0) || 0;
-  if (baseDay5Items > 0 && day5Items === 0) {
-    normalized[4] = safeClone(base[4]);
-    itineraryRepairNeeded = true;
-  }
-
-  return normalized;
 }
 
 let activeDay = 0;
@@ -3482,12 +3488,14 @@ function moveItem(fromDi, fromGi, fromIi, toDi, toGi, toIndex) {
   if (!sourceGroup.items[fromIi]) return;
 
   const [moved] = sourceGroup.items.splice(fromIi, 1);
+  if (!sourceGroup.items.length) sourceGroup._empty = true;
   const targetItems = targetGroup.items;
 
   if (toIndex < 0) toIndex = 0;
   if (toIndex > targetItems.length) toIndex = targetItems.length;
 
   targetItems.splice(toIndex, 0, moved);
+  delete targetGroup._empty;
   afterDataChange();
 }
 
@@ -3541,11 +3549,13 @@ function saveItem() {
       let tg = itinerary[di].groups.find(g=>g.time===time);
       if (!tg) { itinerary[di].groups.push({time,items:[]}); tg=itinerary[di].groups.at(-1); }
       tg.items.push(newItem);
-    } else { itinerary[di].groups[gi].items[ii] = newItem; }
+      delete tg._empty;
+    } else { itinerary[di].groups[gi].items[ii] = newItem; delete itinerary[di].groups[gi]._empty; }
   } else {
     let tg = itinerary[pendingDayIdx].groups.find(g=>g.time===time);
     if (!tg) { itinerary[pendingDayIdx].groups.push({time,items:[]}); tg=itinerary[pendingDayIdx].groups.at(-1); }
     tg.items.push(newItem);
+    delete tg._empty;
   }
   closeItemModal(); afterDataChange();
 }
@@ -3558,6 +3568,7 @@ function deleteItem(di, gi, ii) {
   }
   if (!confirm('確定刪除？')) return;
   group.items.splice(ii, 1);
+  if (!group.items.length) group._empty = true;
   afterDataChange();
 }
 
