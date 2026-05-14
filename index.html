@@ -2578,31 +2578,31 @@ body {
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {
   getDatabase,
   ref,
   get,
   set,
   onValue
-} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
 // Realtime Database cloud-sync version.
+// Public Firebase: data path is public/travelExpense. Anyone with the URL can read/write if your Firebase Rules allow public access.
 // Changes are saved locally first, then synced to Firebase when online.
 const firebaseConfig = {
-  apiKey: "AIzaSyCFxgzS051WnS4_SLz3fGQqecA_Z17ufXs",
-  authDomain: "young-f077e.firebaseapp.com",
-  databaseURL: "https://young-f077e-default-rtdb.firebaseio.com",
-  projectId: "young-f077e",
-  storageBucket: "young-f077e.firebasestorage.app",
-  messagingSenderId: "943810399939",
-  appId: "1:943810399939:web:1fb76c566be17692a75c76",
-  measurementId: "G-WXTLLDVMTP"
+  apiKey: "AIzaSyAvo2-aTHpDdnzNvD4aOp5o16KBQaR9OlU",
+  authDomain: "yikai-shared.firebaseapp.com",
+  databaseURL: "https://yikai-shared-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "yikai-shared",
+  storageBucket: "yikai-shared.firebasestorage.app",
+  messagingSenderId: "798549808274",
+  appId: "1:798549808274:web:ef37e35a097fd46405c24b"
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
 const realtimeDb = getDatabase(firebaseApp);
-const tripRef = ref(realtimeDb, "trips/japan-2026");
+const tripRef = ref(realtimeDb, "public/travelExpense");
 
 const STORAGE_KEY = 'tian-zhen-ji-japan-trip-cloud-cache-v1';
 let applyingStoredData = false;
