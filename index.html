@@ -718,6 +718,91 @@ body { background:var(--bg); color:var(--text); font-family:'Noto Sans TC',sans-
 }
 
 
+/* ── TRIP COST LEDGER ── */
+.trip-cost-summary {
+  display:grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap:10px;
+  margin-bottom:12px;
+}
+.trip-cost-total, .trip-cost-card {
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#fffaf4;
+  padding:14px;
+}
+.trip-cost-total {
+  background:linear-gradient(135deg, #9f2f24, #c05b46);
+  color:#fff;
+  border-color:#9f2f24;
+}
+.trip-cost-label { font-size:12px; font-weight:900; opacity:.78; letter-spacing:.04em; }
+.trip-cost-amount { font-family:'Nunito', sans-serif; font-size:28px; font-weight:900; line-height:1.15; margin-top:4px; }
+.trip-cost-sub { font-size:11px; opacity:.78; margin-top:4px; font-weight:700; }
+.trip-cost-card .trip-cost-amount { color:var(--text); font-size:22px; }
+.trip-cost-cats {
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:8px;
+  margin-bottom:12px;
+}
+.trip-cost-cat {
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:#fffdf9;
+  padding:10px;
+  min-width:0;
+}
+.trip-cost-cat-name { font-size:11px; color:var(--text2); font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.trip-cost-cat-amt { font-family:'Nunito', sans-serif; margin-top:3px; font-size:15px; font-weight:900; color:var(--tom-blue); }
+.trip-cost-log { display:flex; flex-direction:column; gap:8px; }
+.trip-cost-row {
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:10px;
+  align-items:center;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:#fffdf9;
+  padding:11px 12px;
+}
+.trip-cost-main { min-width:0; }
+.trip-cost-title { font-size:14px; font-weight:900; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.trip-cost-meta { display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
+.trip-cost-pill {
+  display:inline-flex; align-items:center; gap:3px;
+  padding:2px 7px;
+  border-radius:999px;
+  background:#f9ede7;
+  color:#9f2f24;
+  font-size:10px;
+  font-weight:900;
+}
+.trip-cost-note { margin-top:5px; font-size:11px; color:var(--text3); line-height:1.45; }
+.trip-cost-right { display:flex; align-items:center; gap:8px; }
+.trip-cost-price { font-family:'Nunito', sans-serif; font-size:16px; font-weight:900; color:var(--text); white-space:nowrap; }
+.trip-cost-delete {
+  width:28px; height:28px; border:none; border-radius:9px;
+  background:#feeeed; color:#d94040; cursor:pointer; font-size:15px; font-weight:900;
+}
+.trip-cost-delete:hover { background:#d94040; color:#fff; }
+.trip-cost-empty {
+  border:1px dashed var(--border);
+  border-radius:16px;
+  background:#fffaf4;
+  padding:14px;
+  color:var(--text3);
+  font-size:13px;
+  font-weight:800;
+}
+@media (max-width: 520px) {
+  .trip-cost-summary { grid-template-columns: 1fr; }
+  .trip-cost-cats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .trip-cost-row { grid-template-columns: 1fr; }
+  .trip-cost-right { justify-content:space-between; }
+}
+
+
 /* ── KYOTO STYLE OVERRIDE ── */
 :root {
   --tom-blue: #6f8f72;
@@ -2336,6 +2421,7 @@ body {
     <div class="utility-tabs" id="utilityTabs">
       <button class="utility-tab active" type="button" data-panel="todoPanel" onclick="switchUtilityPanel('todoPanel', this)">✅ 待辦清單</button>
       <button class="utility-tab" type="button" data-panel="shoppingPanel" onclick="switchUtilityPanel('shoppingPanel', this)">🛍️ 購物清單</button>
+      <button class="utility-tab" type="button" data-panel="tripCostPanel" onclick="switchUtilityPanel('tripCostPanel', this)">💴 旅程記帳</button>
       <button class="utility-tab" type="button" data-panel="weatherPanel" onclick="switchUtilityPanel('weatherPanel', this)">🌤️ 天氣</button>
     </div>
 
@@ -2354,6 +2440,14 @@ body {
       <div class="todo-list shopping-list" id="shoppingList"></div>
     </div>
 
+
+
+    <div class="utility-panel" id="tripCostPanel">
+      <div class="section-actions">
+        <button class="btn-sm" onclick="openTripCostModal()">＋ 新增飯店 / 車票 / 旅費</button>
+      </div>
+      <div id="tripCostWrap"></div>
+    </div>
     <div class="utility-panel weather-panel-wrap" id="weatherPanel">
       <div class="weather-city-tabs" id="weatherCityTabs">
         <button class="weather-city-btn active" type="button" data-city="osaka" onclick="selectWeatherCity('osaka', this)">大阪</button>
@@ -2382,7 +2476,7 @@ body {
     <div class="expense-top">
       <div>
         <div class="total-label">總花費</div>
-        <div class="total-amount"><sup>JPY </sup><span id="totalNum">0</span></div>
+        <div class="total-amount"><sup>NT$ </sup><span id="totalNum">0</span></div>
       </div>
       <button class="btn-add-exp" onclick="openExpenseModal()">＋ 新增記帳</button>
     </div>
@@ -2515,13 +2609,61 @@ body {
       <div class="field"><label>項目名稱</label>
         <input id="e-desc" type="text" placeholder="例：電車 / 地鐵">
       </div>
-      <div class="field"><label>金額（JPY）</label>
+      <div class="field"><label>金額（台幣 TWD）</label>
         <input id="e-amount" type="number" min="0" step="0.5" placeholder="0">
       </div>
     </div>
     <div class="modal-foot">
       <button class="btn-cancel" onclick="closeExpenseModal()">取消</button>
       <button class="btn-save" onclick="saveExpense()">儲存</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- TRIP COST MODAL -->
+<div class="overlay" id="tripCostModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>新增旅程記帳</h3>
+      <button class="modal-x" onclick="closeTripCostModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>類別</label>
+        <select id="tc-category">
+          <option value="飯店">🏨 飯店</option>
+          <option value="機票">✈️ 機票</option>
+          <option value="車票">🚆 車票 / 交通</option>
+          <option value="餐費">🍜 餐費</option>
+          <option value="門票">🎟️ 門票</option>
+          <option value="購物">🛍️ 購物</option>
+          <option value="其他">🧾 其他</option>
+        </select>
+      </div>
+      <div class="field"><label>項目名稱</label>
+        <input id="tc-desc" type="text" placeholder="例：京都飯店三晚 / HARUKA 車票">
+      </div>
+      <div class="field"><label>金額（台幣 TWD）</label>
+        <input id="tc-amount" type="number" min="0" step="1" inputmode="decimal" placeholder="0">
+      </div>
+      <div class="field"><label>日期（選填）</label>
+        <input id="tc-date" type="date">
+      </div>
+      <div class="field"><label>狀態</label>
+        <select id="tc-status">
+          <option value="未付款">未付款</option>
+          <option value="已付款">已付款</option>
+          <option value="已預訂">已預訂</option>
+          <option value="待確認">待確認</option>
+        </select>
+      </div>
+      <div class="field"><label>備註（選填）</label>
+        <textarea id="tc-note" placeholder="例：Agoda 已刷卡、兩人平均分攤、現場付款"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeTripCostModal()">取消</button>
+      <button class="btn-save" onclick="saveTripCost()">儲存</button>
     </div>
   </div>
 </div>
@@ -3331,7 +3473,7 @@ function showDropIndicator(listEl, clientY) {
 }
 
 // ── RENDER ──
-function render() { renderTodos(); renderShopping(); renderExpenses(); renderTabs(); renderPanels(); }
+function render() { renderTodos(); renderShopping(); renderTripCosts(); renderExpenses(); renderTabs(); renderPanels(); }
 
 function renderChecklist(list, elId, emptyText, onToggle) {
   const el = document.getElementById(elId);
@@ -3498,20 +3640,20 @@ function getCurrentSettlementSnapshot() {
     } else if (adjustedMumuNet > 0) {
       amount = Math.abs(adjustedMumuNet);
       direction = 'boyu_to_mumu';
-      mainText = `波魚應還小姆 JPY ${fmt(amount)}`;
+      mainText = `波魚應還小姆 NT$ ${fmt(amount)}`;
       const totalShared = expenses.filter(e => e.who === 'shared').reduce((a,b)=>a+b.amount,0);
       const perPerson = totalShared / 2;
       subText = totalShared > 0
-        ? `共同花費 JPY ${fmt(totalShared)}，每人應分攤 JPY ${fmt(perPerson)}。小姆目前墊付較多。`
+        ? `共同花費 NT$ ${fmt(totalShared)}，每人應分攤 NT$ ${fmt(perPerson)}。小姆目前墊付較多。`
         : '小姆目前墊付較多。';
     } else {
       amount = Math.abs(adjustedBoyuNet);
       direction = 'mumu_to_boyu';
-      mainText = `小姆應還波魚 JPY ${fmt(amount)}`;
+      mainText = `小姆應還波魚 NT$ ${fmt(amount)}`;
       const totalShared = expenses.filter(e => e.who === 'shared').reduce((a,b)=>a+b.amount,0);
       const perPerson = totalShared / 2;
       subText = totalShared > 0
-        ? `共同花費 JPY ${fmt(totalShared)}，每人應分攤 JPY ${fmt(perPerson)}。波魚目前墊付較多。`
+        ? `共同花費 NT$ ${fmt(totalShared)}，每人應分攤 NT$ ${fmt(perPerson)}。波魚目前墊付較多。`
         : '波魚目前墊付較多。';
     }
   }
@@ -3540,7 +3682,7 @@ function renderSettlementRecords() {
       <div class="settle-record-head">
         <div class="settle-record-main">${r.timeText}</div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <div class="settle-record-time">JPY ${r.amountText}</div>
+          <div class="settle-record-time">NT$ ${r.amountText}</div>
           <button class="btn-del-settle" onclick="deleteSettlementRecord(${r._i})">×</button>
         </div>
       </div>
@@ -3603,11 +3745,11 @@ function renderSettlement() {
     <div class="settle-grid">
       <div class="settle-card">
         <div class="settle-label">小姆總墊付金額</div>
-        <div class="settle-value">JPY ${fmt(snapshot.mumuAdvanceTotal)}</div>
+        <div class="settle-value">NT$ ${fmt(snapshot.mumuAdvanceTotal)}</div>
       </div>
       <div class="settle-card">
         <div class="settle-label">波魚總墊付金額</div>
-        <div class="settle-value">JPY ${fmt(snapshot.boyuAdvanceTotal)}</div>
+        <div class="settle-value">NT$ ${fmt(snapshot.boyuAdvanceTotal)}</div>
       </div>
     </div>
     <div class="settle-main">
@@ -3653,9 +3795,9 @@ function renderExpenses() {
   const boyu   = expenses.filter(e=>e.who==='boyu').reduce((a,b)=>a+b.amount,0);
   const total  = shared + mumu + boyu;
   document.getElementById('totalNum').textContent = fmt(total);
-  document.getElementById('sharedAmt').textContent = 'JPY ' + fmt(shared);
-  document.getElementById('mumuAmt').textContent = 'JPY ' + fmt(mumu);
-  document.getElementById('boyuAmt').textContent = 'JPY ' + fmt(boyu);
+  document.getElementById('sharedAmt').textContent = 'NT$ ' + fmt(shared);
+  document.getElementById('mumuAmt').textContent = 'NT$ ' + fmt(mumu);
+  document.getElementById('boyuAmt').textContent = 'NT$ ' + fmt(boyu);
   const log = document.getElementById('expenseLog');
   log.innerHTML = '';
   if (!expenses.length) return;
@@ -3673,7 +3815,7 @@ function renderExpenses() {
         <span class="exp-desc">${e.desc}</span>
       </div>
       <div class="exp-right">
-        <span class="exp-amt">JPY ${fmt(e.amount)}</span>
+        <span class="exp-amt">NT$ ${fmt(e.amount)}</span>
         <button class="btn-del-exp" onclick="deleteExpense(${i})">×</button>
       </div>`;
     log.appendChild(row);
@@ -4000,6 +4142,113 @@ function deleteItem(di, gi, ii) {
   afterDataChange();
 }
 
+
+// ── TRIP COST LEDGER ──
+const tripCostCategories = ['飯店','機票','車票','餐費','門票','購物','其他'];
+function normalizeTripCosts(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map(item => ({
+    who: item?.who || 'shared',
+    payer: item?.payer || 'mumu',
+    desc: String(item?.desc || item?.name || '').trim(),
+    amount: Math.round(Number(item?.amount || 0)),
+    currency: item?.currency || 'TWD',
+    category: tripCostCategories.includes(item?.category) ? item.category : '其他',
+    date: item?.date || '',
+    status: item?.status || '未付款',
+    note: item?.note || '',
+    createdAt: Number(item?.createdAt || Date.now())
+  })).filter(item => item.desc && item.amount > 0);
+}
+function formatTWD(n) {
+  const num = Math.round(Number(n || 0));
+  return num.toLocaleString('zh-TW', { maximumFractionDigits: 0 });
+}
+function renderTripCosts() {
+  const wrap = document.getElementById('tripCostWrap');
+  if (!wrap) return;
+  expenses = normalizeTripCosts(expenses);
+  const paidTotal = expenses.filter(e => e.status === '已付款').reduce((sum, e) => sum + e.amount, 0);
+  const unpaidTotal = expenses.filter(e => e.status !== '已付款').reduce((sum, e) => sum + e.amount, 0);
+  const total = paidTotal + unpaidTotal;
+  const cats = tripCostCategories.map(cat => ({
+    cat,
+    amount: expenses.filter(e => e.category === cat).reduce((sum, e) => sum + e.amount, 0)
+  })).filter(x => x.amount > 0);
+  const catsHtml = cats.length ? cats.map(x => `
+    <div class="trip-cost-cat">
+      <div class="trip-cost-cat-name">${escapeHTML(x.cat)}</div>
+      <div class="trip-cost-cat-amt">NT$ ${formatTWD(x.amount)}</div>
+    </div>
+  `).join('') : '<div class="trip-cost-empty">還沒有分類金額，新增飯店或車票後會自動統計。</div>';
+  const rowsHtml = expenses.length ? expenses.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map((item, sortedIndex) => {
+    const index = expenses.indexOf(item);
+    return `
+      <div class="trip-cost-row">
+        <div class="trip-cost-main">
+          <div class="trip-cost-title">${escapeHTML(item.desc)}</div>
+          <div class="trip-cost-meta">
+            <span class="trip-cost-pill">${escapeHTML(item.category)}</span>
+            <span class="trip-cost-pill">${escapeHTML(item.status)}</span>
+            ${item.date ? `<span class="trip-cost-pill">${escapeHTML(item.date)}</span>` : ''}
+          </div>
+          ${item.note ? `<div class="trip-cost-note">${escapeHTML(item.note)}</div>` : ''}
+        </div>
+        <div class="trip-cost-right">
+          <div class="trip-cost-price">NT$ ${formatTWD(item.amount)}</div>
+          <button class="trip-cost-delete" type="button" onclick="deleteTripCost(${index})" aria-label="刪除旅程記帳">×</button>
+        </div>
+      </div>
+    `;
+  }).join('') : '<div class="trip-cost-empty">還沒有旅程記帳。可以新增飯店、機票、車票、門票等大筆旅費。</div>';
+  wrap.innerHTML = `
+    <div class="trip-cost-summary">
+      <div class="trip-cost-total">
+        <div class="trip-cost-label">旅程總成本</div>
+        <div class="trip-cost-amount">NT$ ${formatTWD(total)}</div>
+        <div class="trip-cost-sub">含已付款與未付款</div>
+      </div>
+      <div class="trip-cost-card">
+        <div class="trip-cost-label">已付款 / 待付款</div>
+        <div class="trip-cost-amount">NT$ ${formatTWD(paidTotal)}</div>
+        <div class="trip-cost-sub">待付款 NT$ ${formatTWD(unpaidTotal)}</div>
+      </div>
+    </div>
+    <div class="trip-cost-cats">${catsHtml}</div>
+    <div class="trip-cost-log">${rowsHtml}</div>
+  `;
+}
+function openTripCostModal() {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('tc-category').value = '飯店';
+  document.getElementById('tc-desc').value = '';
+  document.getElementById('tc-amount').value = '';
+  document.getElementById('tc-date').value = today;
+  document.getElementById('tc-status').value = '未付款';
+  document.getElementById('tc-note').value = '';
+  document.getElementById('tripCostModal').classList.add('open');
+}
+function closeTripCostModal() { document.getElementById('tripCostModal').classList.remove('open'); }
+function saveTripCost() {
+  const category = document.getElementById('tc-category').value;
+  const desc = document.getElementById('tc-desc').value.trim();
+  const amount = Number(document.getElementById('tc-amount').value);
+  const date = document.getElementById('tc-date').value;
+  const status = document.getElementById('tc-status').value;
+  const note = document.getElementById('tc-note').value.trim();
+  if (!desc) { alert('請輸入項目名稱！'); return; }
+  if (!Number.isFinite(amount) || amount <= 0) { alert('請輸入有效金額！'); return; }
+  expenses.push({ who:'shared', payer:'mumu', category, desc, amount, currency:'TWD', date, status, note, createdAt: Date.now() });
+  closeTripCostModal();
+  afterDataChange();
+}
+function deleteTripCost(i) {
+  if (i < 0 || i >= expenses.length) return;
+  if (!confirm('確認刪除這筆旅程記帳？')) return;
+  expenses.splice(i, 1);
+  afterDataChange();
+}
+
 // ── EXPENSE MODAL ──
 
 function toggleExpensePayerField() {
@@ -4055,14 +4304,29 @@ function closeShoppingModal() { document.getElementById('shoppingModal').classLi
 function readShoppingImageFile(file) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve('');
+    if (!file.type.startsWith('image/')) return reject(new Error('不是圖片檔'));
     const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
     reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const maxSide = 900;
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.78));
+      };
+      img.src = String(reader.result || '');
+    };
     reader.readAsDataURL(file);
   });
 }
 
-function previewShoppingImage(event) {
+async function previewShoppingImage(event) {
   const file = event.target.files && event.target.files[0];
   const preview = document.getElementById('s-image-preview');
   if (!preview) return;
@@ -4074,11 +4338,13 @@ function previewShoppingImage(event) {
     preview.textContent = '請選擇圖片檔';
     return;
   }
-  const reader = new FileReader();
-  reader.onload = () => {
-    preview.innerHTML = `<img src="${reader.result}" alt="購物圖片預覽">`;
-  };
-  reader.readAsDataURL(file);
+  preview.textContent = '圖片壓縮中…';
+  try {
+    const image = await readShoppingImageFile(file);
+    preview.innerHTML = `<img src="${image}" alt="購物圖片預覽">`;
+  } catch (err) {
+    preview.textContent = '圖片預覽失敗，請換一張圖片';
+  }
 }
 
 async function saveShoppingItem() {
@@ -4101,7 +4367,7 @@ async function saveShoppingItem() {
 
 // 防誤觸：編輯視窗不再因為點到旁邊背景就關閉
 // 只能用右上角 ✕ 或下方「取消」關閉，避免輸入到一半不小心消失。
-['itemModal','expenseModal','todoModal','shoppingModal'].forEach(id => {
+['itemModal','expenseModal','todoModal','shoppingModal','tripCostModal'].forEach(id => {
   const modalOverlay = document.getElementById(id);
   if (!modalOverlay) return;
   modalOverlay.addEventListener('click', function(e){
@@ -4125,7 +4391,7 @@ function applyPayload(data = {}) {
   applyingStoredData = true;
   todos = safeArray(data.todos, todos);
   shoppingList = normalizeShoppingList(safeArray(data.shoppingList, shoppingList));
-  expenses = safeArray(data.expenses, expenses);
+  expenses = normalizeTripCosts(safeArray(data.expenses, expenses));
   itinerary = normalizeItineraryData(data.itinerary);
   settlementRecords = safeArray(data.settlementRecords, settlementRecords);
   settledOffsets = (data.settledOffsets && typeof data.settledOffsets === 'object')
@@ -4179,6 +4445,7 @@ window.resetLocalData = resetLocalData;
 Object.assign(window, {
   openAddModal, openEditModal, closeItemModal, saveItem, deleteItem,
   openExpenseModal, closeExpenseModal, saveExpense, deleteExpense,
+  openTripCostModal, closeTripCostModal, saveTripCost, deleteTripCost,
   openTodoModal, closeTodoModal, saveTodo,
   openShoppingModal, closeShoppingModal, saveShoppingItem, previewShoppingImage,
   switchUtilityPanel, selectWeatherCity
